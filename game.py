@@ -94,7 +94,7 @@ class Bishop:
         mx = max(x1, x2)
         obstacles[x2][y2] = False
         for i in range(mn, mx):
-            if obstacles[i][y1+(i-mn) if x1 < x2 else y2-(i-mn)]:
+            if obstacles[i][y1+(i-mn) if (x1<x2) != (y1<y2) else y1-(i-mn)]:
                 return False
         return True
     
@@ -163,7 +163,7 @@ class Queen:
             mx = max(x1, x2)
             obstacles[x2][y2] = False
             for i in range(mn, mx):
-                if obstacles[i][y1+(i-mn) if x1 < x2 else y2-(i-mn)]:
+                if obstacles[i][y1+(i-mn) if (x1<x2) != (y1<y2) else y1-(i-mn)]:
                     return False
             return True
         else:
