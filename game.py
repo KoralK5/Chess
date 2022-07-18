@@ -191,7 +191,7 @@ class King:
         for i in range(-1, 2):
             for j in range(-1, 2):
                 if i != 0 or j != 0:
-                    moves.append(x+i, y+j)
+                    moves.append((x+i, y+j))
         return moves
     
     def clear_path(self, x1, y1, x2, y2, obstacles):
@@ -316,7 +316,7 @@ class Chess:
                         self.pieces[x1][y1] = piece
                         self.pieces[x2][y2] = temp
                         return False
-            
+
             if piece.name == 'king':
                 if piece.color == 'white':
                     self.white_king_x = x2
@@ -324,6 +324,20 @@ class Chess:
                 else:
                     self.black_king_x = x2
                     self.black_king_y = y2
+
+            if self.turn == 'white' and self.is_attacked(self.white_king_x, self.white_king_y):
+                self.pieces[x1][y1] = piece
+                self.pieces[x2][y2] = temp
+                self.white_king_x = x1
+                self.white_king_y = y1
+                return False
+            
+            if self.turn == 'black' and self.is_attacked(self.black_king_x, self.black_king_y):
+                self.pieces[x1][y1] = piece
+                self.pieces[x2][y2] = temp
+                self.black_king_x = x1
+                self.black_king_y = y1
+                return False
 
             piece.x = x2
             piece.y = y2
