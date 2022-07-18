@@ -90,6 +90,7 @@ class Bishop:
         return moves
     
     def clear_path(self, x1, y1, x2, y2, obstacles):
+        obstacles[x2][y2] = False
         x_delta = 1 if x1 < x2 else -1
         y_delta = 1 if y1 < y2 else -1
         for i in range(x1, x2, x_delta):
@@ -254,15 +255,15 @@ class Chess:
                         pieces[i][j] = King('black', i, j)
         return pieces
     
-    def is_valid(self, x1, y1, x2, y2):
+    def is_valid(self, x1, y1, x2, y2, check=True):
         if x1 < 0 or x1 > 7 or y1 < 0 or y1 > 7 or x2 < 0 or x2 > 7 or y2 < 0 or y2 > 7:
             return False
 
         pieces = self.pieces
         piece = pieces[x1][y1]
-        if piece.color != self.turn:
+        if check and piece.color != self.turn:
             return False
-        if pieces[x2][y2].color == piece.color:
+        if check and pieces[x2][y2].color == piece.color:
             return False
 
         possible = piece.possible_moves()
@@ -282,7 +283,7 @@ class Chess:
     def is_attacked(self, x, y):
         for i in range(8):
             for j in range(8):
-                if self.pieces[i][j].color != self.pieces[x][y].color and self.is_valid(i, j, x, y):
+                if self.pieces[i][j].color != self.pieces[x][y].color and self.is_valid(i, j, x, y, False):
                     return True
         return False
     
