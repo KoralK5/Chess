@@ -279,7 +279,7 @@ class Chess:
         if self.is_valid(x1, y1, x2, y2):
             temp = self.pieces[x2][y2]
             piece = self.pieces[x1][y1]
-            if self.pieces[x2][y2].name == 'none':
+            if piece.name == 'pawn' and self.pieces[x2][y2].name == 'none':
                 self.pieces[x1][y2] = Empty('none', x1, y2)
             self.pieces[x2][y2] = piece
             self.pieces[x1][y1] = Empty('none', x1, y1)
