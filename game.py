@@ -94,7 +94,7 @@ class Bishop:
         mx = max(x1, x2)
         obstacles[x2][y2] = False
         for i in range(mn, mx):
-            if obstacles[i][y1+(i-mn) if (x1<x2) != (y1<y2) else y1-(i-mn)]:
+            if obstacles[i][y1+(i-mn) if y1 < y2 else y1-(i-mn)]:
                 return False
         return True
     
@@ -158,12 +158,11 @@ class Queen:
     
     def clear_path(self, x1, y1, x2, y2, obstacles):
         obstacles[x2][y2] = False
-        if (x1 != x2 and y1 != y2):
+        if x1 != x2 and y1 != y2:
             mn = min(x1, x2)
             mx = max(x1, x2)
-            obstacles[x2][y2] = False
             for i in range(mn, mx):
-                if obstacles[i][y1+(i-mn) if (x1<x2) != (y1<y2) else y1-(i-mn)]:
+                if obstacles[i][y1+(i-mn) if y1 < y2 else y1-(i-mn)]:
                     return False
             return True
         else:
