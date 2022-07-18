@@ -4,7 +4,7 @@ class Empty:
         self.y = y
         self.color = color
         self.moved = False
-        self.name = 'none'
+        self.name = 'empty'
 
     def possible_moves(self):
         return []
@@ -90,13 +90,11 @@ class Bishop:
         return moves
     
     def clear_path(self, x1, y1, x2, y2, obstacles):
-        mn = min(x1, x2)
-        mx = max(x1, x2)
-        obstacles[x2][y2] = False
-        for i in range(mn, mx):
-            if obstacles[i][y1+(i-mn) if y1 < y2 else y1-(i-mn)]:
+        x_delta = 1 if x1 < x2 else -1
+        y_delta = 1 if y1 < y2 else -1
+        for i in range(x1, x2, x_delta):
+            if obstacles[i][y1+(i-x1)*y_delta]:
                 return False
-        return True
     
     def draw(self):
         return '\u2657' if self.color == 'black' else '\u265D'
@@ -159,12 +157,11 @@ class Queen:
     def clear_path(self, x1, y1, x2, y2, obstacles):
         obstacles[x2][y2] = False
         if x1 != x2 and y1 != y2:
-            mn = min(x1, x2)
-            mx = max(x1, x2)
-            for i in range(mn, mx):
-                if obstacles[i][y1+(i-mn) if y1 < y2 else y1-(i-mn)]:
+            x_delta = 1 if x1 < x2 else -1
+            y_delta = 1 if y1 < y2 else -1
+            for i in range(x1, x2, x_delta):
+                if obstacles[i][y1+(i-x1)*y_delta]:
                     return False
-            return True
         else:
             if x1 == x2:
                 for i in range(min(y1, y2), max(y1, y2)):
@@ -174,7 +171,7 @@ class Queen:
                 for i in range(min(x1, x2), max(x1, x2)):
                     if obstacles[i][y1]:
                         return False
-            return True
+        return True
     
     def draw(self):
         return '\u2655' if self.color == 'black' else '\u265B'
@@ -190,7 +187,11 @@ class King:
     def possible_moves(self):
         x = self.x
         y = self.y
-        moves = [(x+1, y), (x-1, y), (x, y+1), (x, y-1), (x+1, y+1), (x+1, y-1), (x-1, y+1), (x-1, y-1)]
+        moves = []
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if i != 0 or j != 0:
+                    moves.append(x+i, y+j)
         return moves
     
     def clear_path(self, x1, y1, x2, y2, obstacles):
@@ -217,9 +218,13 @@ class Chess:
         self.draw = True
         self.flip = True
         self.game_end = False
+        self.white_king_x = 0
+        self.white_king_y = 4
+        self.black_king_x = 7
+        self.black_king_y = 4
     
     def get_pieces(self):
-        pieces = [[Empty('none', x, y) for y in range(8)] for x in range(8)]
+        pieces = [[Empty('empty', x, y) for y in range(8)] for x in range(8)]
         for i in range(8):
             for j in range(8):
                 if self.board[i][j] != ' ':
@@ -261,27 +266,34 @@ class Chess:
             return False
 
         possible = piece.possible_moves()
-        if abs(x2-x1) == 1 and abs(y2-y1) == 1 and pieces[x1][y2].name == 'pawn' and pieces[x1][y2].en_passant and pieces[x1][y1].color != pieces[x1][y2].color:
-            return True
-
         if (x2, y2) not in possible:
             return False
+
+        if pieces[x1][y1].name == 'pawn' and pieces[x1][y2].name == 'pawn' and abs(x2-x1) == 1 and abs(y2-y1) == 1 and pieces[x1][y2].en_passant and pieces[x1][y1].color != pieces[x1][y2].color:
+            return True
         
-        obstacles = [[pieces[i][j].name!='none' for j in range(8)] for i in range(8)]
+        obstacles = [[pieces[i][j].name!='empty' for j in range(8)] for i in range(8)]
         obstacles[x1][y1] = False
         if not piece.clear_path(x1, y1, x2, y2, obstacles):
             return False
         
         return True
     
+    def is_attacked(self, x, y):
+        for i in range(8):
+            for j in range(8):
+                if self.pieces[i][j].color != self.pieces[x][y].color and self.is_valid(i, j, x, y):
+                    return True
+        return False
+    
     def move_piece(self, x1, y1, x2, y2):
         if self.is_valid(x1, y1, x2, y2):
             temp = self.pieces[x2][y2]
             piece = self.pieces[x1][y1]
-            if piece.name == 'pawn' and self.pieces[x2][y2].name == 'none':
-                self.pieces[x1][y2] = Empty('none', x1, y2)
+            if piece.name == 'pawn' and self.pieces[x2][y2].name == 'empty':
+                self.pieces[x1][y2] = Empty('empty', x1, y2)
             self.pieces[x2][y2] = piece
-            self.pieces[x1][y1] = Empty('none', x1, y1)
+            self.pieces[x1][y1] = Empty('empty', x1, y1)
 
             for i in range(8):
                 for j in range(8):
@@ -304,6 +316,14 @@ class Chess:
                         self.pieces[x1][y1] = piece
                         self.pieces[x2][y2] = temp
                         return False
+            
+            if piece.name == 'king':
+                if piece.color == 'white':
+                    self.white_king_x = x2
+                    self.white_king_y = y2
+                else:
+                    self.black_king_x = x2
+                    self.black_king_y = y2
 
             piece.x = x2
             piece.y = y2
