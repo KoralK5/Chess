@@ -94,8 +94,9 @@ class Bishop:
         x_delta = 1 if x1 < x2 else -1
         y_delta = 1 if y1 < y2 else -1
         for i in range(x1, x2, x_delta):
-            if obstacles[i][y1+(i-x1)*y_delta]:
+            if obstacles[i][y1+abs(i-x1)*y_delta]:
                 return False
+        return True
     
     def draw(self):
         return '\u2657' if self.color == 'black' else '\u265D'
@@ -161,7 +162,7 @@ class Queen:
             x_delta = 1 if x1 < x2 else -1
             y_delta = 1 if y1 < y2 else -1
             for i in range(x1, x2, x_delta):
-                if obstacles[i][y1+(i-x1)*y_delta]:
+                if obstacles[i][y1+abs(i-x1)*y_delta]:
                     return False
         else:
             if x1 == x2:
@@ -193,6 +194,8 @@ class King:
             for j in range(-1, 2):
                 if i != 0 or j != 0:
                     moves.append((x+i, y+j))
+        moves.append((x, y+2))
+        moves.append((x, y-2))
         return moves
     
     def clear_path(self, x1, y1, x2, y2, obstacles):
@@ -273,6 +276,17 @@ class Chess:
         if pieces[x1][y1].name == 'pawn' and pieces[x1][y2].name == 'pawn' and abs(x2-x1) == 1 and abs(y2-y1) == 1 and pieces[x1][y2].en_passant and pieces[x1][y1].color != pieces[x1][y2].color:
             return True
         
+        if pieces[x1][y1].name == 'king' and abs(y2-y1) == 2:
+            if pieces[x1][y1].moved:
+                return False
+            if y1 < y2:
+                if pieces[x1][y2+1].name == 'rook' and not pieces[x1][y2+1].moved and pieces[x1][y1+1].name == pieces[x1][y1+2].name == 'empty':
+                    return True
+            else:
+                if pieces[x1][y2-2].name == 'rook' and not pieces[x1][y2-2].moved and pieces[x1][y1-1].name == pieces[x1][y1-2].name == pieces[x1][y1-3].name == 'empty':
+                    return True
+            return False
+        
         obstacles = [[pieces[i][j].name!='empty' for j in range(8)] for i in range(8)]
         obstacles[x1][y1] = False
         if not piece.clear_path(x1, y1, x2, y2, obstacles):
@@ -289,6 +303,45 @@ class Chess:
     
     def move_piece(self, x1, y1, x2, y2):
         if self.is_valid(x1, y1, x2, y2):
+            if self.pieces[x1][y1].name == 'king' and abs(y2-y1) == 2:
+                if y1 < y2:
+                    self.pieces[x2][y2] = self.pieces[x1][y1]
+                    self.pieces[x2][y1+1] = self.pieces[x2][y2+1]
+                    self.pieces[x1][y1] = Empty('empty', x1, y1)
+                    self.pieces[x2][y2+1] = Empty('empty', x2, y2+1)
+
+                    self.pieces[x2][y2].moved = True
+                    self.pieces[x2][y2+1].moved = True
+
+                    self.pieces[x2][y2].x = x2
+                    self.pieces[x2][y2].y = y2
+                    self.pieces[x2][y2+1].x = x2
+                    self.pieces[x2][y2+1].y = y2
+                else:
+                    self.pieces[x2][y2] = self.pieces[x1][y1]
+                    self.pieces[x2][y1-1] = self.pieces[x2][y2-2]
+                    self.pieces[x1][y1] = Empty('empty', x1, y1)
+                    self.pieces[x2][y2-2] = Empty('empty', x2, y2-2)
+
+                    self.pieces[x2][y2].moved = True
+                    self.pieces[x2][y1-1].moved = True
+
+                    self.pieces[x2][y2].x = x2
+                    self.pieces[x2][y2].y = y2
+                    self.pieces[x2][y1-1].x = x2
+                    self.pieces[x2][y1-1].y = y1-1
+
+                if self.turn == 'white':
+                    self.white_king_x = x2
+                    self.white_king_y = y2
+                else:
+                    self.black_king_x = x2
+                    self.black_king_y = y2
+                    
+                self.turn = 'black' if self.turn == 'white' else 'white'
+                self.move_count += 1
+                return True
+
             temp = self.pieces[x2][y2]
             piece = self.pieces[x1][y1]
             if piece.name == 'pawn' and self.pieces[x2][y2].name == 'empty':
